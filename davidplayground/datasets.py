@@ -62,7 +62,7 @@ class CoinDataset:
                         df = treatment(df)
                 except Exception as err:
                     print(f"FAILED TO APPLY TREATMENT: {treatment.__name__}")
-                    print(f"\t{err}")
+                    raise err
         return df
 
     def sample_between(self, start, end, days=2, granularity=60):
