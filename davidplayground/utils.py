@@ -30,7 +30,7 @@ def convert_timestamps(df):
     df = df.reset_index(drop=True)
     return df
 
-def add_sma(df, dt=2, cols=['open', 'close', 'high', 'low']):
+def add_sma(df, dt=2, cols=['close']):
     '''
     A treatment function for adding simple moving average(s) as columns
     to the dataset.
@@ -45,7 +45,7 @@ def add_sma(df, dt=2, cols=['open', 'close', 'high', 'low']):
         df[sma_name] = sma_col
     return df
 
-def add_ema(df, dt=2, smoothing=2.0,cols=['open', 'close', 'high', 'low']):
+def add_ema(df, dt=2, smoothing=2.0,cols=['close']):
     '''
     A treatment function for adding exponential moving average(s) as columns
     to the dataset.
@@ -68,6 +68,15 @@ def add_ema(df, dt=2, smoothing=2.0,cols=['open', 'close', 'high', 'low']):
     return df
 
 def add_bollinger(df, dt=2, K=2.0, middle='sma'):
+    '''
+    A treatment function for adding bollinger bands as columns
+    to the dataset.
+    :param df: Dataframe dataset
+    :param dt: Size of window for BB
+    :param K: Number of stdev's to adjust by
+    :param middle: MA method to use
+    :return: treated dataset
+    '''
     if middle == 'sma':
         df = add_sma(df, dt=dt, cols=['close'])
     elif middle == 'ema':
@@ -77,4 +86,38 @@ def add_bollinger(df, dt=2, K=2.0, middle='sma'):
     stdev = df['close'].rolling(window=dt).std()
     df['bb_upper'] = stdev * K + df[f'close_{middle}{dt}']
     df['bb_lower'] = -stdev * K + df[f'close_{middle}{dt}']
+    return df
+
+def add_rsi(df, dt=2, middle='ema'):
+    '''
+    A treatment function for adding the relative-strength-index as
+    a column to the dataset.
+    :param df: Dataframe dataset
+    :param dt: Window size
+    :param middle: MA method
+    :return: treated dataset
+    '''
+    if middle not in ['sma', 'ema']:
+        raise Exception('RSI mean method must be either "sma" or "ema"')
+    U = []
+    D = []
+    for i in range(len(df)):
+        if i == 0:
+            U.append(0)
+            D.append(0)
+            continue
+        p0 = df.loc[i - 1]['close']
+        p1 = df.loc[i]['close']
+        U.append(max(p1 - p0, 0))
+        D.append(max(p0 - p1, 0))
+    dfc = df.copy()
+    dfc['U'] = U
+    dfc['D'] = D
+    if middle == 'sma':
+        dfc = add_sma(dfc, dt=dt, cols=['U', 'D'])
+    elif middle == 'ema':
+        dfc = add_ema(dfc, dt=dt, cols=['U', 'D'], smoothing=2.0)
+    RS = dfc[f'U_{middle}{dt}'] / dfc[f'D_{middle}{dt}']
+    RSI = 100.0 - 100.0/(1.0 + RS)
+    df[f'rsi{dt}'] = RSI
     return df
