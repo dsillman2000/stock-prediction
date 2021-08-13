@@ -56,14 +56,20 @@ def add_ema(df, dt=2, smoothing=2.0,cols=['close']):
     '''
     for col in cols:
         ema0 = df[col][:dt].mean()
+        if pd.isna(ema0):
+            ema0 = 0.0
         ema_col = [None for _ in range(dt)]
         ema_name = col + '_ema' + str(dt)
         for index, row in df.iterrows():
             if index < dt:
                 continue
+            elif pd.isna(row[col]):
+                ema_col.append(None)
+                continue
             ema1 = row[col]*(smoothing/(1.0 + dt)) + ema0*(1 - smoothing/(1.0 + dt))
             ema_col.append(ema1)
             ema0 = ema1
+        print(len(df),'vs',len(ema_col))
         df[ema_name] = ema_col
     return df
 
@@ -120,4 +126,39 @@ def add_rsi(df, dt=2, middle='ema'):
     RS = dfc[f'U_{middle}{dt}'] / dfc[f'D_{middle}{dt}']
     RSI = 100.0 - 100.0/(1.0 + RS)
     df[f'rsi{dt}'] = RSI
+    return df
+
+def add_macd(df, a=12, b=26, c=9, middle='ema'):
+    '''
+    Treatment function for adding moving-average-convergence-divergence
+    indicator as a column to the dataset
+    :param df: DataFrame dataset
+    :param a: Characteristic time a
+    :param b: Characteristic time b
+    :param c: Characteristic time c
+    :param middle: MA method
+    :return: treated dataset
+    '''
+    if middle not in ['ema', 'sma']:
+        raise Exception("MA method 'middle' must be in ['sma', 'ema']")
+    a_name = f"close_{middle}{a}"
+    b_name = f"close_{middle}{b}"
+    c_name = f"macd_{middle}{c}"
+    if middle == 'sma':
+        df = add_sma(df, dt=a, cols=['close'])
+        df = add_sma(df, dt=b, cols=['close'])
+        macd = df[a_name] - df[b_name]
+        df['macd'] = macd
+        df = add_sma(df, dt=c, cols=['macd'])
+        df['macd_signal'] = df[c_name].copy()
+        df['macd_hist'] = df['macd'] - df['macd_signal']
+    elif middle == 'ema':
+        df = add_ema(df, dt=a, smoothing=2.0, cols=['close'])
+        df = add_ema(df, dt=b, smoothing=2.0, cols=['close'])
+        macd = df[a_name] - df[b_name]
+        df['macd'] = macd
+        df = add_ema(df, dt=c, smoothing=2.0, cols=['macd'])
+        df['macd_signal'] = df[c_name].copy()
+        print(df['macd_signal'])
+        df['macd_hist'] = df['macd'] - df['macd_signal']
     return df
