@@ -1,5 +1,7 @@
 import pandas as pd
 from datetime import datetime, date, timedelta
+from sklearn.preprocessing import *
+import sklearn
 import numpy as np
 
 def cbquery2df(query):
@@ -160,3 +162,21 @@ def add_macd(df, a=12, b=26, c=9, middle='ema'):
         df['macd_signal'] = df[c_name].copy()
         df['macd_hist'] = df['macd'] - df['macd_signal']
     return df
+
+def add_scaler(df, scaler=MinMaxScaler, cols=['close']):
+    '''
+    Treatment function to apply a scaler to column(s) of a dataset
+    :param df: DataFrame dataset
+    :param scaler: either sklearn.preprocessing scaler or custom function
+    :param cols: list of columns to scale
+    :return: treated dataset
+    '''
+    if isinstance(scaler, sklearn.base.TransformerMixin):
+        df[cols] = scaler.fit_transform(df[cols])
+        return df
+    elif callable(scaler):
+        for col in cols:
+            df[col] = scaler(df[col])
+        return df
+    else:
+        raise Exception("Scaler must be either a callable or child of sklearn.preprocessing")

@@ -6,7 +6,7 @@ class TradeHandler:
     '''
     Superclass for trading algorithms
     '''
-    def __init__(self, initial_capital=1000.0, trade_fee=0.005):
+    def __init__(self, logic, initial_capital=1000.0, trade_fee=0.005):
         '''
         Initialize the trading algorithm with an initial balance.
         :param initial_capital: Amount in USD to start with
@@ -14,6 +14,7 @@ class TradeHandler:
         self.wallets = {'USD': initial_capital}
         self.prices = {'USD': 1.0} # "last known prices" used for valuing portfolio
         self.fee = trade_fee
+        self.logic = logic
 
     def portfolio_value(self):
         total = 0.0
@@ -38,6 +39,7 @@ class TradeHandler:
         Choose how to act on a given slice of a dataset. This is the
         prime method to override in designing a trading agent.
         :param row: a row of a dataframe dataset
+        :param name: name of the coin
         '''
         self.prices[name] = row['close']
         return
