@@ -69,7 +69,6 @@ def add_ema(df, dt=2, smoothing=2.0,cols=['close']):
             ema1 = row[col]*(smoothing/(1.0 + dt)) + ema0*(1 - smoothing/(1.0 + dt))
             ema_col.append(ema1)
             ema0 = ema1
-        print(len(df),'vs',len(ema_col))
         df[ema_name] = ema_col
     return df
 
@@ -159,6 +158,5 @@ def add_macd(df, a=12, b=26, c=9, middle='ema'):
         df['macd'] = macd
         df = add_ema(df, dt=c, smoothing=2.0, cols=['macd'])
         df['macd_signal'] = df[c_name].copy()
-        print(df['macd_signal'])
         df['macd_hist'] = df['macd'] - df['macd_signal']
     return df
