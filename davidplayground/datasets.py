@@ -65,18 +65,19 @@ class CoinDataset:
                     raise err
         return df
 
-    def sample_between(self, start, end, days=2, granularity=60):
+    def sample_between(self, start, end, days=0, hours=0, granularity=60):
         '''
         Sample `days` worth of data at random from between start and end datetimes.
         :param start: early bound datetime
         :param end: late bound datetime
         :param days: number of days' worth of data to sample
+        :param hours: number of hours' worth of data to sample
         :param granularity: granularity for data
         :return: dataframe dataset
         '''
         days_between = (end - start).days
         rand_day = np.random.randint(0, days_between)
         rand_sdate = start + timedelta(days=rand_day)
-        rand_edate = rand_sdate + timedelta(days=days)
+        rand_edate = rand_sdate + timedelta(days=days, hours=hours)
         result = self.get(rand_sdate.isoformat(), rand_edate.isoformat(), granularity=granularity)
         return result
