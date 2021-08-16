@@ -3,6 +3,69 @@ import pandas as pd
 from cbpro import PublicClient
 from davidplayground.utils import *
 
+class WienerDataset:
+    def __init__(self, s0=1.0, nmu=0.0, nsigma=1.0):
+        '''
+        Initializes a Wiener process generator to use as a toy dataset for
+        algorithms.
+
+        :param s0: Value of coin at initial time t0
+        :param nmu: Mean of normal increments in Wiener process
+        :param nsigma: Stdev of normal increments in Wiener process
+        '''
+        self.s0 = s0
+        self.nmu = nmu
+        self.nsigma = nsigma
+        self.treatments = []
+        self.treatment_args = []
+
+    def add_treatment(self, treatment, kwargs=None):
+        '''
+        Append a new treatment function to the post-processor for the dataset
+        :param treatment: treatment function with first argument dataframe and
+        return value dataframe.
+        :param args: additional arguments to the treatment function
+        '''
+        if kwargs:
+            self.treatment_args.append(kwargs)
+        self.treatments.append(treatment)
+
+    def generate(self, hours=1, seed=None, raw=False):
+        '''
+        Generates a Wiener process with the specified seed. Returns a DataFrame.
+
+        :param n: Amount of datapoints to generate
+        :param seed: Seed for random generation
+        :return: DataFrame of data points.
+        '''
+        if seed is not None:
+            np.random.seed(seed)
+        st = self.s0
+        t = datetime.now() - timedelta(hours=hours)
+        n = hours * 60
+        rows = []
+        for i in range(n):
+            newrow = {'time':t, 'close': st}
+            st += np.random.normal(self.nmu, self.nsigma ** 2)
+            t += timedelta(seconds=60)
+            if st <= 0.0:
+                st = 0.0001
+            rows.append(newrow)
+        df = pd.DataFrame(rows)
+        if not raw:
+            for t in range(len(self.treatments)):
+                treatment = self.treatments[t]
+                try:
+                    args = self.treatment_args[t]
+                    if args:
+                        df = treatment(df, **args)
+                    else:
+                        df = treatment(df)
+                except Exception as err:
+                    print(f"FAILED TO APPLY TREATMENT: {treatment.__name__}")
+                    raise err
+        return df
+
 class CoinDataset:
     def __init__(self, name='BTC'):
         '''
