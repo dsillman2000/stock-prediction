@@ -19,13 +19,8 @@ from sklearn.preprocessing import MinMaxScaler
 
 %matplotlib inline
 
-pubclient = cbpro.PublicClient()
-authclient = cbpro.AuthenticatedClient(
-    key="36ffa4ceb691e6a40ff7293046dfed67", 
-    b64secret="dU4s+DpDUJjeQZjA7rgU7E+NXcHmpb7spUArdNdTtwDcbRJM4S+bIgwNOktsyAk89EIwz1/9prOfDaGe1yJUTw==", 
-    passphrase="0w1tih56rnvr", 
-    api_url="https://api-public.sandbox.pro.coinbase.com"
-)
+pubclient = #
+authclient = #
 
 class AlgoBot:
 
